@@ -14,8 +14,8 @@ import (
 
 // defined in ctr_multiblock_*.s
 
-//go:generate sh -c "PYTHONIOENCODING=utf8 python ctr_multiblock_amd64_gen.py 1,2,4,8 > ctr_multiblock_amd64.s"
-//go:generate sh -c "PYTHONIOENCODING=utf8 python ctr_multiblock_arm64_gen.py 1,2,4,8 > ctr_multiblock_arm64.s"
+//go:generate sh -c "PYTHONIOENCODING=utf8 python2.7 ctr_multiblock_amd64_gen.py 1,2,4,8 > ctr_multiblock_amd64.s"
+//go:generate sh -c "PYTHONIOENCODING=utf8 python2.7 ctr_multiblock_arm64_gen.py 1,2,4,8 > ctr_multiblock_arm64.s"
 
 //go:noescape
 func rev16Asm(iv *byte)

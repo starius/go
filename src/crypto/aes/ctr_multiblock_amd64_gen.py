@@ -20,8 +20,8 @@ u'''
 #define SRC R10
 #define IV_PTR BX
 #define BLOCK_INDEX R11
-#define IV_LOW R12
-#define IV_HIGH R13
+#define IV_LOW_LE R12
+#define IV_HIGH_LE R13
 #define BSWAP X15
 
 DATA bswapMask<>+0x00(SB)/8, $0x08090a0b0c0d0e0f
@@ -41,8 +41,8 @@ u'''
 	MOVQ dst+16(FP), DST
 	MOVQ src+24(FP), SRC
 	MOVQ ivRev+32(FP), IV_PTR
-	MOVQ 0(IV_PTR), IV_LOW
-	MOVQ 8(IV_PTR), IV_HIGH
+	MOVQ 0(IV_PTR), IV_LOW_LE
+	MOVQ 8(IV_PTR), IV_HIGH_LE
 	MOVQ blockIndex+40(FP), BLOCK_INDEX
 
 	MOVOU bswapMask<>(SB), BSWAP
@@ -79,18 +79,18 @@ def ctr(n):
     # Prepare plain from IV and blockIndex.
 
     # Add blockIndex.
-    print '\tADDQ BLOCK_INDEX, IV_LOW'
-    print '\tADCQ $0, IV_HIGH'
+    print '\tADDQ BLOCK_INDEX, IV_LOW_LE'
+    print '\tADCQ $0, IV_HIGH_LE'
 
     # Copy to plaintext registers.
     for i in xrange(n):
         # https://stackoverflow.com/a/2231893
-        print '\tMOVQ IV_LOW, X{i}'.format(i=i)
-        print '\tPINSRQ $1, IV_HIGH, X{i}'.format(i=i)
+        print '\tMOVQ IV_LOW_LE, X{i}'.format(i=i)
+        print '\tPINSRQ $1, IV_HIGH_LE, X{i}'.format(i=i)
         print '\tPSHUFB BSWAP, X{i}'.format(i=i)
         if i != n-1:
-            print '\tADDQ $1, IV_LOW'
-            print '\tADCQ $0, IV_HIGH'
+            print '\tADDQ $1, IV_LOW_LE'
+            print '\tADCQ $0, IV_HIGH_LE'
 
     # Initial key add.
     for i in xrange(n):
