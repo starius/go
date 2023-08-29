@@ -3,7 +3,6 @@
 # license that can be found in the LICENSE file.
 
 import sys
-import random
 
 # The file is based on https://github.com/mmcloughlin/aesnix/blob/master/gen.py
 
