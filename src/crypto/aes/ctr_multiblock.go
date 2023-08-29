@@ -8,7 +8,7 @@ package aes
 
 import (
 	"crypto/cipher"
-	"crypto/internal/subtle"
+	"crypto/internal/alias"
 	"fmt"
 )
 
@@ -71,7 +71,7 @@ func (c *aesCtrWithIV) XORKeyStreamAt(dst, src []byte, offset uint64) {
 	}
 	dst = dst[:len(src)]
 
-	if subtle.InexactOverlap(dst, src) {
+	if alias.InexactOverlap(dst, src) {
 		panic("crypto/aes: invalid buffer overlap")
 	}
 
