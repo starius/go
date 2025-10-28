@@ -21,10 +21,11 @@ type CTR struct {
 func NewCTR(b *Block, iv []byte) *CTR {
 	// Allocate the CTR here, in an easily inlineable function, so
 	// the allocation can be done in the caller's stack frame
-	// instead of the heap.  See issue 70499.
+	// instead of the heap. See issue 70499.
 	c := newCTR(b, iv)
 	return &c
 }
+
 func newCTR(b *Block, iv []byte) CTR {
 	if len(iv) != BlockSize {
 		panic("bad IV length")
@@ -62,7 +63,7 @@ func RoundToBlock(c *CTR) {
 
 // XORKeyStreamAt behaves like XORKeyStream but keeps no state, and instead
 // seeks into the keystream by the given bytes offset from the start (ignoring
-// any XORKetStream calls). This allows for random access into the keystream, up
+// any XORKeyStream calls). This allows for random access into the keystream, up
 // to 16 EiB from the start.
 func (c *CTR) XORKeyStreamAt(dst, src []byte, offset uint64) {
 	if len(dst) < len(src) {
@@ -74,60 +75,13 @@ func (c *CTR) XORKeyStreamAt(dst, src []byte, offset uint64) {
 	}
 	fips140.RecordApproved()
 
-	ivlo, ivhi := add128(c.ivlo, c.ivhi, offset/BlockSize)
-
-	if blockOffset := offset % BlockSize; blockOffset != 0 {
-		// We have a partial block at the beginning.
-		var in, out [BlockSize]byte
-		copy(in[blockOffset:], src)
-		ctrBlocks1(&c.b, &out, &in, ivlo, ivhi)
-		n := copy(dst, out[blockOffset:])
-		src = src[n:]
-		dst = dst[n:]
-		ivlo, ivhi = add128(ivlo, ivhi, 1)
-	}
-
-	for len(src) >= 8*BlockSize {
-		ctrBlocks8(&c.b, (*[8 * BlockSize]byte)(dst), (*[8 * BlockSize]byte)(src), ivlo, ivhi)
-		src = src[8*BlockSize:]
-		dst = dst[8*BlockSize:]
-		ivlo, ivhi = add128(ivlo, ivhi, 8)
-	}
-
-	// The tail can have at most 7 = 4 + 2 + 1 blocks.
-	if len(src) >= 4*BlockSize {
-		ctrBlocks4(&c.b, (*[4 * BlockSize]byte)(dst), (*[4 * BlockSize]byte)(src), ivlo, ivhi)
-		src = src[4*BlockSize:]
-		dst = dst[4*BlockSize:]
-		ivlo, ivhi = add128(ivlo, ivhi, 4)
-	}
-	if len(src) >= 2*BlockSize {
-		ctrBlocks2(&c.b, (*[2 * BlockSize]byte)(dst), (*[2 * BlockSize]byte)(src), ivlo, ivhi)
-		src = src[2*BlockSize:]
-		dst = dst[2*BlockSize:]
-		ivlo, ivhi = add128(ivlo, ivhi, 2)
-	}
-	if len(src) >= 1*BlockSize {
-		ctrBlocks1(&c.b, (*[1 * BlockSize]byte)(dst), (*[1 * BlockSize]byte)(src), ivlo, ivhi)
-		src = src[1*BlockSize:]
-		dst = dst[1*BlockSize:]
-		ivlo, ivhi = add128(ivlo, ivhi, 1)
-	}
-
-	if len(src) != 0 {
-		// We have a partial block at the end.
-		var in, out [BlockSize]byte
-		copy(in[:], src)
-		ctrBlocks1(&c.b, &out, &in, ivlo, ivhi)
-		copy(dst, out[:])
-	}
+	ctrXORKeyStreamAt(c, dst, src, offset)
 }
 
 // Each ctrBlocksN function XORs src with N blocks of counter keystream, and
 // stores it in dst. src is loaded in full before storing dst, so they can
 // overlap even inexactly. The starting counter value is passed in as a pair of
 // little-endian 64-bit integers.
-
 func ctrBlocks(b *Block, dst, src []byte, ivlo, ivhi uint64) {
 	buf := make([]byte, len(src), 8*BlockSize)
 	for i := 0; i < len(buf); i += BlockSize {
